@@ -1,48 +1,46 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { Card, Row, Col, Statistic, message } from 'antd';
-import { Line } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-} from 'chart.js';
+import { Pie, Line } from 'react-chartjs-2';
+import { Chart, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement } from 'chart.js';
+import api from '../api';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+Chart.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement);
 
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
-  const [trendData, setTrendData] = useState([]);
-  const [error, setError] = useState('');
+  const [chartData, setChartData] = useState(null);
 
   useEffect(() => {
-    axios.get('http://localhost:8000/clients/dashboard')
+    api.get('/dashboard')
       .then(res => setDashboardData(res.data))
-      .catch(err => {
-        console.error(err);
-        setError('Error fetching dashboard data');
-        message.error('Error fetching dashboard data');
-      });
+      .catch(err => console.error(err));
 
-    axios.get('http://localhost:8000/checkins/trends')
-      .then(res => setTrendData(res.data))
+    api.get('/dashboard/visualizations')
+      .then(res => {
+        const { clients_by_plan, weight_trend } = res.data;
+        setChartData({ clients_by_plan, weight_trend });
+      })
       .catch(err => console.error(err));
   }, []);
 
-  const chartData = {
-    labels: trendData.map(item => item.week),
+  const pieData = {
+    labels: ['One-One', 'Nutrition'],
     datasets: [
       {
-        label: 'Average Weight',
-        data: trendData.map(item => item.avg_weight),
+        data: chartData ? [chartData.clients_by_plan.one_one, chartData.clients_by_plan.nutrition] : [0, 0],
+        backgroundColor: ['#36A2EB', '#FF6384'],
+        hoverBackgroundColor: ['#36A2EB', '#FF6384'],
+      },
+    ],
+  };
+
+  const lineData = {
+    labels: chartData ? chartData.weight_trend.map(item => item.date) : [],
+    datasets: [
+      {
+        label: 'Weight Trend',
+        data: chartData ? chartData.weight_trend.map(item => item.weight) : [],
         fill: false,
-        tension: 0.1,
-        borderColor: 'rgba(75,192,192,1)'
+        borderColor: '#742774'
       }
     ]
   };
@@ -51,42 +49,43 @@ const Dashboard = () => {
     <div>
       <h2>Dashboard</h2>
       {dashboardData ? (
-        <>
-          {dashboardData.client_count === 0 ? (
-            <p>No clients added yet.</p>
-          ) : (
-            <>
-              <Row gutter={16}>
-                <Col span={8}>
-                  <Card>
-                    <Statistic title="Total Clients" value={dashboardData.client_count} />
-                  </Card>
-                </Col>
-                <Col span={8}>
-                  <Card>
-                    <Statistic title="Expiring Clients (Next 2 weeks)" value={dashboardData.expiring_clients} />
-                  </Card>
-                </Col>
-                <Col span={8}>
-                  <Card>
-                    <Statistic title="Total Sales" value={dashboardData.sales?.total_sales || 0} />
-                  </Card>
-                </Col>
-              </Row>
-              <Card title="Average Weight Trend" style={{ marginTop: 24 }}>
-                {trendData.length > 0 ? (
-                  <Line data={chartData} />
+        <div className="row">
+          <div className="col-md-4">
+            <div className="card text-white bg-primary mb-3">
+              <div className="card-header">Total Clients</div>
+              <div className="card-body">
+                <h5 className="card-title">{dashboardData.client_count}</h5>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-4">
+            <div className="card text-white bg-warning mb-3">
+              <div className="card-header">Expiring Clients (Next 2 weeks)</div>
+              <div className="card-body">
+                <h5 className="card-title">{dashboardData.expiring_clients}</h5>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-4">
+            <div className="card mb-3">
+              <div className="card-header">Visualizations</div>
+              <div className="card-body">
+                {chartData ? (
+                  <>
+                    <h5>Clients by Plan Type</h5>
+                    <Pie data={pieData} />
+                    <h5 className="mt-4">Overall Weight Trend</h5>
+                    <Line data={lineData} />
+                  </>
                 ) : (
-                  <p>No chart data available.</p>
+                  <p>Loading charts...</p>
                 )}
-              </Card>
-            </>
-          )}
-        </>
-      ) : error ? (
-        <p>{error}</p>
+              </div>
+            </div>
+          </div>
+        </div>
       ) : (
-        <p>Loading dashboard details...</p>
+        <p>Loading dashboard data...</p>
       )}
     </div>
   );

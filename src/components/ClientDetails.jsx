@@ -1,23 +1,12 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Card, message, Button } from 'antd';
 import { Line } from 'react-chartjs-2';
-import { AgGridReact } from 'ag-grid-react';
+import { Chart, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend } from 'chart.js';
 import CheckinForm from './CheckinForm';
 import DietPlanUpload from './DietPlanUpload';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-} from 'chart.js';
+import api from '../api';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+Chart.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
 
 const ClientDetails = () => {
   const { id } = useParams();
@@ -25,7 +14,6 @@ const ClientDetails = () => {
   const [checkins, setCheckins] = useState([]);
   const [dietPlans, setDietPlans] = useState([]);
 
-  // Fetch client info, check-ins, and diet plan(s) on component mount or when id changes
   useEffect(() => {
     fetchClient();
     fetchCheckins();
@@ -33,113 +21,137 @@ const ClientDetails = () => {
   }, [id]);
 
   const fetchClient = () => {
-    axios.get(`http://localhost:8000/clients/${id}`)
+    api.get(`/clients/${id}`)
       .then(res => setClient(res.data))
-      .catch(err => {
-        console.error(err);
-        message.error('Error fetching client details');
-      });
+      .catch(err => console.error(err));
   };
 
   const fetchCheckins = () => {
-    axios.get(`http://localhost:8000/checkins/${id}`)
+    api.get(`/clients/${id}/checkins`)
       .then(res => setCheckins(res.data))
-      .catch(err => {
-        console.error(err);
-        message.error('Error fetching check-ins');
-      });
+      .catch(err => console.error(err));
   };
 
   const fetchDietPlans = () => {
-    axios.get(`http://localhost:8000/api/uploads/${id}`)
-    .then(res => setDietPlans(res.data))
-      .catch(err => {
-        console.error(err);
-        message.error('Error fetching diet plans');
-      });
+    api.get(`/clients/${id}/dietplans`)
+      .then(res => setDietPlans(res.data))
+      .catch(err => console.error(err));
   };
 
-  const onNewCheckin = useCallback(() => fetchCheckins(), [id]);
-  const onNewDietPlan = useCallback(() => fetchDietPlans(), [id]);
+  const onNewCheckin = () => fetchCheckins();
+  const onNewDietPlan = () => fetchDietPlans();
 
-  const weightChartData = {
-    labels: checkins.map(item => item.date),
+  // Prepare data for weight trend chart from check-ins
+  const weightTrendData = {
+    labels: checkins.map(c => c.date),
     datasets: [
       {
         label: 'Weight',
-        data: checkins.map(item => item.weight),
+        data: checkins.map(c => c.weight),
         fill: false,
-        tension: 0.1,
-        borderColor: 'rgba(75,192,192,1)'
+        borderColor: '#3e95cd'
       }
     ]
   };
 
-  // AG Grid column definitions for check-ins table
-  const checkinColumnDefs = useMemo(() => [
-    { headerName: "Date", field: "date", sortable: true, filter: true },
-    { headerName: "Weight", field: "weight" },
-    { headerName: "Chest", field: "chest" },
-    { headerName: "Left Arm", field: "left_arm" },
-    { headerName: "Right Arm", field: "right_arm" },
-    { headerName: "Waist", field: "waist" },
-    { headerName: "Left Thigh", field: "left_thigh" },
-    { headerName: "Right Thigh", field: "right_thigh" },
-    { headerName: "Neck", field: "neck" },
-    { headerName: "Shoulder", field: "shoulder" },
-    { headerName: "Remarks", field: "remarks" }
-  ], []);
-
-  // Function to open the diet plan file in a new tab/window.
-  const openDietPlan = (plan) => {
-    // Assumes your backend serves static files from /uploads
-    window.open(`http://localhost:8000/uploads/${plan.file_name}`, '_blank');
+  // Example: waist trend chart
+  const waistTrendData = {
+    labels: checkins.map(c => c.date),
+    datasets: [
+      {
+        label: 'Waist',
+        data: checkins.map(c => c.waist),
+        fill: false,
+        borderColor: '#8e5ea2'
+      }
+    ]
   };
 
   return (
     <div>
       <h2>Client Details</h2>
       {client && (
-        <Card title={client.name} style={{ marginBottom: 24 }}>
-          <p><strong>Email:</strong> {client.email}</p>
-          <p><strong>Phone:</strong> {client.phone}</p>
-          <p><strong>Plan:</strong> {client.plan_type} - {client.plan_duration} months</p>
-          <p><strong>Start Date:</strong> {client.start_date}</p>
-          <p><strong>End Date:</strong> {client.end_date}</p>
-        </Card>
-      )}
-      <Card title="Diet/Workout Plan" style={{ marginBottom: 24 }}>
-        {dietPlans && dietPlans.length > 0 ? (
-          <div>
-            <p>
-              <strong>Uploaded Plan:</strong> {dietPlans[0].file_name}
-            </p>
-            <Button type="link" onClick={() => openDietPlan(dietPlans[0])}>
-              View Plan
-            </Button>
+        <div className="card mb-3">
+          <div className="card-header">
+            {client.name}
           </div>
-        ) : (
-          <p>No diet/workout plan uploaded yet.</p>
-        )}
-        <DietPlanUpload clientId={id} onUpload={onNewDietPlan} />
-      </Card>
-      <Card title="Weekly Check-ins" style={{ marginBottom: 24 }}>
-        <CheckinForm clientId={id} onAdd={onNewCheckin} />
-        <div className="ag-theme-alpine" style={{ height: 300, width: '100%', marginTop: 16 }}>
-          <AgGridReact
-            rowData={checkins}
-            columnDefs={checkinColumnDefs}
-            domLayout="autoHeight"
-          />
+          <div className="card-body">
+            <p>Email: {client.email}</p>
+            <p>Phone: {client.phone}</p>
+            <p>Plan: {client.plan_type} - {client.plan_duration} months</p>
+            <p>Start Date: {client.start_date}</p>
+            <p>End Date: {client.end_date}</p>
+          </div>
         </div>
-      </Card>
-      <Card title="Weight Trend">
-        {checkins.length > 0 ? (
-          <Line data={weightChartData} />
-        ) : (
-          <p>No check-in data available for chart.</p>
-        )}
-      </Card>
+      )}
+      <h3>Upload Diet/Workout Plan</h3>
+      <DietPlanUpload clientId={id} onUpload={onNewDietPlan} />
+
+      {/* Display uploaded diet/workout plans as clickable links */}
+      <h3>Diet/Workout Plans</h3>
+      {dietPlans && dietPlans.length > 0 ? (
+        <ul>
+          {dietPlans.map(plan => (
+            <li key={plan.id}>
+              <a href={`https://your-backend-url.com/uploads/${plan.file_name}`} target="_blank" rel="noopener noreferrer">
+                {plan.file_name}
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No diet/workout plans uploaded yet.</p>
+      )}
+
+      <h3>Weekly Check-ins</h3>
+      <CheckinForm clientId={id} onAdd={onNewCheckin} />
+      <table className="table table-striped mt-3">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Weight</th>
+            <th>Chest</th>
+            <th>Left Arm</th>
+            <th>Right Arm</th>
+            <th>Waist</th>
+            <th>Left Thigh</th>
+            <th>Right Thigh</th>
+            <th>Neck</th>
+            <th>Shoulder</th>
+            <th>Remarks</th>
+          </tr>
+        </thead>
+        <tbody>
+          {checkins.map(checkin => (
+            <tr key={checkin.id}>
+              <td>{checkin.date}</td>
+              <td>{checkin.weight}</td>
+              <td>{checkin.chest}</td>
+              <td>{checkin.left_arm}</td>
+              <td>{checkin.right_arm}</td>
+              <td>{checkin.waist}</td>
+              <td>{checkin.left_thigh}</td>
+              <td>{checkin.right_thigh}</td>
+              <td>{checkin.neck}</td>
+              <td>{checkin.shoulder}</td>
+              <td>{checkin.remarks}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="mt-4">
+        <h4>Check-in Trends</h4>
+        <div className="row">
+          <div className="col-md-6">
+            <h5>Weight Trend</h5>
+            <Line data={weightTrendData} />
+          </div>
+          <div className="col-md-6">
+            <h5>Waist Trend</h5>
+            <Line data={waistTrendData} />
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

@@ -1,61 +1,37 @@
 import React, { useEffect, useMemo, useCallback, useState } from 'react';
-import axios from 'axios';
 import { AgGridReact } from 'ag-grid-react';
 import { useNavigate } from 'react-router-dom';
-import { message } from 'antd';
+import api from '../api';
 
 const ClientsTable = () => {
   const [clients, setClients] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get('http://localhost:8000/clients/')
+    api.get('/clients')
       .then(res => setClients(res.data))
-      .catch(err => {
-        console.error(err);
-        message.error('Error fetching clients');
-      });
+      .catch(err => console.error(err));
   }, []);
 
   const columnDefs = useMemo(() => [
     { headerName: "Name", field: "name", sortable: true, filter: true },
     { headerName: "Email", field: "email" },
     { headerName: "Phone", field: "phone" },
-    { headerName: "Initial Weight", field: "initial_weight" },
-    { headerName: "Height", field: "height" },
-    { headerName: "Age", field: "age" },
     { headerName: "Plan Type", field: "plan_type" },
     { headerName: "Plan Duration", field: "plan_duration" },
     { headerName: "Start Date", field: "start_date" },
-    { 
-      headerName: "End Date", 
-      field: "end_date", 
-      cellStyle: params => {
+    { headerName: "End Date", field: "end_date", cellClass: params => {
         const endDate = new Date(params.value);
         const now = new Date();
         const diffDays = (endDate - now) / (1000 * 3600 * 24);
-        if(diffDays < 7) return { backgroundColor: 'red', color: 'white' };
-        if(diffDays < 21) return { backgroundColor: 'orange', color: 'black' };
-        return {};
-      }
+        if(diffDays < 7) return 'bg-danger text-white';
+        if(diffDays < 21) return 'bg-warning text-dark';
+        return '';
+      } 
     },
-    { 
-      headerName: "Diet/Workout Sent", 
-      field: "dietplans", 
-      cellRendererFramework: (params) => {
+    { headerName: "Diet/Workout Sent", field: "dietplans", cellRenderer: params => {
         const hasPlan = params.value && params.value.length > 0;
-        return (
-          <span
-            style={{
-              display: 'inline-block',
-              padding: '4px',
-              backgroundColor: hasPlan ? 'green' : 'red',
-              color: 'white'
-            }}
-          >
-            {hasPlan ? 'Yes' : 'No'}
-          </span>
-        );
+        return `<span class="${hasPlan ? 'bg-success text-white' : 'bg-danger text-white'} p-1">${hasPlan ? 'Yes' : 'No'}</span>`;
       }
     }
   ], []);
@@ -67,7 +43,7 @@ const ClientsTable = () => {
   return (
     <div>
       <h2>Clients</h2>
-      <div className="ag-theme-alpine" style={{ height: 500, width: '100%' }}>
+      <div className="ag-theme-alpine" style={{ height: 400, width: '100%' }}>
         <AgGridReact
           rowData={clients}
           columnDefs={columnDefs}

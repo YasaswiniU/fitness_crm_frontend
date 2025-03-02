@@ -1,54 +1,41 @@
 import React, { useState } from 'react';
-import { Upload, Button, message } from 'antd';
-import { UploadOutlined } from '@ant-design/icons';
-import axios from 'axios';
+import api from '../api';
 
 const DietPlanUpload = ({ clientId, onUpload }) => {
-  const [fileList, setFileList] = useState([]);
+  const [file, setFile] = useState(null);
 
-  const handleUpload = () => {
-    if (fileList.length === 0) {
-      message.error('Please select a file to upload.');
-      return;
-    }
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0]);
+  };
+
+  const handleUpload = (e) => {
+    e.preventDefault();
+    if (!file) return;
     const formData = new FormData();
-    formData.append('file', fileList[0]);
-    // Updated URL to use /api/uploads prefix
-    axios.post(`http://localhost:8000/api/uploads/${clientId}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+    formData.append("file", file);
+    api.post(`/clients/${clientId}/dietplans`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
     })
     .then(res => {
-      message.success('Diet/Workout plan uploaded!');
-      setFileList([]);
+      alert('Diet/Workout plan uploaded!');
+      setFile(null);
       onUpload();
     })
     .catch(err => {
       console.error(err);
-      message.error('Error uploading file');
+      alert('Error uploading file');
     });
   };
 
-  const props = {
-    onRemove: file => {
-      setFileList([]);
-    },
-    beforeUpload: file => {
-      setFileList([file]);
-      return false;
-    },
-    fileList,
-    accept: ".pdf,.doc,.docx"
-  };
-
   return (
-    <div>
-      <Upload {...props}>
-        <Button icon={<UploadOutlined />}>Select File</Button>
-      </Upload>
-      <Button type="primary" onClick={handleUpload} style={{ marginTop: 16 }}>
-        Upload
-      </Button>
-    </div>
+    <form onSubmit={handleUpload}>
+      <div className="mb-3">
+        <input required type="file" className="form-control" onChange={handleFileChange} accept=".pdf,.doc,.docx" />
+      </div>
+      <button type="submit" className="btn btn-secondary">Upload</button>
+    </form>
   );
 };
 
