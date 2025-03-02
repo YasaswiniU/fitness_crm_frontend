@@ -1,7 +1,7 @@
 {
   "name": "fitness-crm-frontend",
   "version": "1.0.0",
-  "homepage": "https://github.com/YasaswiniU/fitness_crm_frontend.git",
+  "homepage": "https://github.com/YasaswiniU/fitness_crm_frontend",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
