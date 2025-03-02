@@ -1,63 +1,45 @@
-import React, { useState } from 'react';
-import api from '../api';
+import React from 'react';
+import { Form, InputNumber, Input, Button, Row, Col, message } from 'antd';
+import axios from 'axios';
 
 const CheckinForm = ({ clientId, onAdd }) => {
-  const [formData, setFormData] = useState({
-    weight: '',
-    chest: '',
-    left_arm: '',
-    right_arm: '',
-    waist: '',
-    left_thigh: '',
-    right_thigh: '',
-    neck: '',
-    shoulder: '',
-    remarks: ''
-  });
+  const [form] = Form.useForm();
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    api.post(`/clients/${clientId}/checkins`, formData)
+  const onFinish = (values) => {
+    axios.post(`https://fitness-crm-backend.onrender.com/checkins/${clientId}`, values)
       .then(res => {
-        alert('Check-in added!');
-        setFormData({
-          weight: '',
-          chest: '',
-          left_arm: '',
-          right_arm: '',
-          waist: '',
-          left_thigh: '',
-          right_thigh: '',
-          neck: '',
-          shoulder: '',
-          remarks: ''
-        });
+        message.success('Check-in added!');
+        form.resetFields();
         onAdd();
       })
       .catch(err => {
         console.error(err);
-        alert('Error adding check-in');
+        message.error('Error adding check-in');
       });
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="row g-3">
-        <div className="col-md-2">
-          <input required type="number" step="0.1" className="form-control" name="weight" placeholder="Weight" value={formData.weight} onChange={handleChange} />
-        </div>
-        {/* Additional input fields for chest, left_arm, etc. */}
-        <div className="col-md-4">
-          <input required type="text" className="form-control" name="remarks" placeholder="Remarks" value={formData.remarks} onChange={handleChange} />
-        </div>
-      </div>
-      <button type="submit" className="btn btn-primary mt-3">Add Check-in</button>
-    </form>
+    <Form form={form} layout="vertical" onFinish={onFinish}>
+      <Row gutter={16}>
+        {['weight', 'chest', 'left_arm', 'right_arm', 'waist', 'left_thigh', 'right_thigh', 'neck', 'shoulder'].map(field => (
+          <Col span={8} key={field}>
+            <Form.Item label={field.replace('_', ' ')} name={field} rules={[{ required: true }]}>
+              <InputNumber style={{ width: '100%' }} step={0.1} />
+            </Form.Item>
+          </Col>
+        ))}
+        <Col span={24}>
+          <Form.Item label="Remarks" name="remarks" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+        </Col>
+      </Row>
+      <Form.Item>
+        <Button type="primary" htmlType="submit" block>
+          Add Check-in
+        </Button>
+      </Form.Item>
+    </Form>
   );
 };
 
