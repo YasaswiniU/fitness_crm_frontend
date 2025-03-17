@@ -9,7 +9,7 @@ const AddClientForm = () => {
   const navigate = useNavigate();
 
   const onFinish = (values) => {
-    axios.post('https://fitness-crm-backend.onrender.com/clients/', {
+    axios.post('http://127.0.0.1:8000/clients/', {
       ...values,
       start_date: values.start_date.format('YYYY-MM-DD')
     })

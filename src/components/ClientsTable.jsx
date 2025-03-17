@@ -9,7 +9,7 @@ const ClientsTable = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get('https://fitness-crm-backend.onrender.com/clients/')
+    axios.get('http://127.0.0.1:8000/clients/')
       .then(res => setClients(res.data))
       .catch(err => {
         console.error(err);

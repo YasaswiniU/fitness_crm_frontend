@@ -13,7 +13,7 @@ const DietPlanUpload = ({ clientId, onUpload }) => {
     }
     const formData = new FormData();
     formData.append('file', fileList[0]);
-    axios.post(`https://fitness-crm-backend.onrender.com/clients/${clientId}/dietplans`, formData, {
+    axios.post(`http://127.0.0.1:8000/clients/${clientId}/dietplans`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
     .then(res => {

@@ -1,12 +1,16 @@
 import React from 'react';
-import { Form, InputNumber, Input, Button, Row, Col, message } from 'antd';
+import { Form, InputNumber, Input, Button, Row, Col, DatePicker, message } from 'antd';
 import axios from 'axios';
 
 const CheckinForm = ({ clientId, onAdd }) => {
   const [form] = Form.useForm();
 
   const onFinish = (values) => {
-    axios.post(`https://fitness-crm-backend.onrender.com/checkins/${clientId}`, values)
+    // Format date as YYYY-MM-DD
+    if(values.date) {
+      values.date = values.date.format('YYYY-MM-DD');
+    }
+    axios.post(`http://127.0.0.1:8000/checkins/${clientId}`, values)
       .then(res => {
         message.success('Check-in added!');
         form.resetFields();
@@ -21,13 +25,56 @@ const CheckinForm = ({ clientId, onAdd }) => {
   return (
     <Form form={form} layout="vertical" onFinish={onFinish}>
       <Row gutter={16}>
-        {['weight', 'chest', 'left_arm', 'right_arm', 'waist', 'left_thigh', 'right_thigh', 'neck', 'shoulder'].map(field => (
-          <Col span={8} key={field}>
-            <Form.Item label={field.replace('_', ' ')} name={field} rules={[{ required: true }]}>
-              <InputNumber style={{ width: '100%' }} step={0.1} />
-            </Form.Item>
-          </Col>
-        ))}
+        <Col span={8}>
+          <Form.Item label="Date" name="date" rules={[{ required: true, message: 'Please select a date' }]}>
+            <DatePicker style={{ width: '100%' }} />
+          </Form.Item>
+        </Col>
+        <Col span={8}>
+          <Form.Item label="Weight" name="weight" rules={[{ required: true }]}>
+            <InputNumber style={{ width: '100%' }} step={0.1} />
+          </Form.Item>
+        </Col>
+        <Col span={8}>
+          <Form.Item label="Chest" name="chest" rules={[{ required: true }]}>
+            <InputNumber style={{ width: '100%' }} step={0.1} />
+          </Form.Item>
+        </Col>
+        <Col span={8}>
+          <Form.Item label="Left Arm" name="left_arm" rules={[{ required: true }]}>
+            <InputNumber style={{ width: '100%' }} step={0.1} />
+          </Form.Item>
+        </Col>
+        <Col span={8}>
+          <Form.Item label="Right Arm" name="right_arm" rules={[{ required: true }]}>
+            <InputNumber style={{ width: '100%' }} step={0.1} />
+          </Form.Item>
+        </Col>
+        <Col span={8}>
+          <Form.Item label="Waist" name="waist" rules={[{ required: true }]}>
+            <InputNumber style={{ width: '100%' }} step={0.1} />
+          </Form.Item>
+        </Col>
+        <Col span={8}>
+          <Form.Item label="Left Thigh" name="left_thigh" rules={[{ required: true }]}>
+            <InputNumber style={{ width: '100%' }} step={0.1} />
+          </Form.Item>
+        </Col>
+        <Col span={8}>
+          <Form.Item label="Right Thigh" name="right_thigh" rules={[{ required: true }]}>
+            <InputNumber style={{ width: '100%' }} step={0.1} />
+          </Form.Item>
+        </Col>
+        <Col span={8}>
+          <Form.Item label="Hips" name="hips" rules={[{ required: true }]}>
+            <InputNumber style={{ width: '100%' }} step={0.1} />
+          </Form.Item>
+        </Col>
+        <Col span={8}>
+          <Form.Item label="Avg Step Count" name="avg_step_count" rules={[{ required: true }]}>
+            <InputNumber style={{ width: '100%' }} step={1} />
+          </Form.Item>
+        </Col>
         <Col span={24}>
           <Form.Item label="Remarks" name="remarks" rules={[{ required: true }]}>
             <Input />

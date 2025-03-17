@@ -1,3 +1,5 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import url("~ag-grid-community/dist/styles/ag-grid.css");
+@import url("~ag-grid-community/dist/styles/ag-theme-balham.css");

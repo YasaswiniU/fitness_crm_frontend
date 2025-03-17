@@ -21,7 +21,7 @@ const Dashboard = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    axios.get('https://fitness-crm-backend.onrender.com/clients/dashboard')
+    axios.get('http://127.0.0.1:8000/clients/dashboard')
       .then(res => setDashboardData(res.data))
       .catch(err => {
         console.error(err);
@@ -29,7 +29,7 @@ const Dashboard = () => {
         message.error('Error fetching dashboard data');
       });
 
-    axios.get('https://fitness-crm-backend.onrender.com/checkins/trends')
+    axios.get('http://127.0.0.1:8000/checkins/trends')
       .then(res => setTrendData(res.data))
       .catch(err => console.error(err));
   }, []);
@@ -73,13 +73,13 @@ const Dashboard = () => {
                   </Card>
                 </Col>
               </Row>
-              <Card title="Average Weight Trend" style={{ marginTop: 24 }}>
+              {/* <Card title="Average Weight Trend" style={{ marginTop: 24 }}>
                 {trendData.length > 0 ? (
                   <Line data={chartData} />
                 ) : (
                   <p>No chart data available.</p>
                 )}
-              </Card>
+              </Card> */}
             </>
           )}
         </>
